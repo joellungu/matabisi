@@ -1,9 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:promata/pages/accueil.dart';
+import 'package:promata/utils/requete.dart';
 import 'package:promata/widgets/reclamation/reclamation_controller.dart';
 import 'package:promata/widgets/reclamation/scanner.dart';
 
@@ -43,36 +45,29 @@ class Reclamation extends GetView<ReclamationController> {
                         width: 50,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(15),
-                          image: DecorationImage(
-                            image: ExactAssetImage(service['logo']),
-                            fit: BoxFit.contain,
-                          ),
+                          // image: DecorationImage(
+                          //   image: ExactAssetImage(service['logo']),
+                          //   fit: BoxFit.contain,
+                          // ),
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              "${Requete.url}/produit-categories/logo/${service['id']}",
+                          placeholder:
+                              (context, url) => CircularProgressIndicator(),
+                          errorWidget:
+                              (context, url, error) => Icon(Icons.error),
                         ),
                       ),
                     ),
                     title: Text(
-                      service['service'],
+                      service['nom'],
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text.rich(
                       TextSpan(
-                        text: "${service['details']}\n",
-                        children: [
-                          // TextSpan(
-                          //   text: "${service['points']}",
-                          //   style: TextStyle(
-                          //     fontWeight: FontWeight.bold,
-                          //     color: Colors.teal,
-                          //   ),
-                          // ),
-                          /*
-                TextSpan(text: '${conversation.points}Pt',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.blue,
-                    )
-                ),
-                */
-                        ],
+                        text: "${service['description'] ?? ''}\n",
+                        children: [],
                       ),
                     ),
                     trailing: Column(
@@ -80,7 +75,7 @@ class Reclamation extends GetView<ReclamationController> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '${service['points']}Pt',
+                          '${service['point']} Pt(s)',
                           style: TextStyle(
                             color: Colors.teal,
                             fontSize: 15,
@@ -147,22 +142,32 @@ class Reclamation extends GetView<ReclamationController> {
                                   width: 100,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(15),
-                                    image: DecorationImage(
-                                      image: ExactAssetImage(service['logo']),
-                                      fit: BoxFit.contain,
-                                    ),
+                                    // image: DecorationImage(
+                                    //   image: ExactAssetImage(service['logo']),
+                                    //   fit: BoxFit.contain,
+                                    // ),
+                                  ),
+                                  child: CachedNetworkImage(
+                                    imageUrl:
+                                        "${Requete.url}/produit-categories/logo/${service['id']}",
+                                    placeholder:
+                                        (context, url) =>
+                                            CircularProgressIndicator(),
+                                    errorWidget:
+                                        (context, url, error) =>
+                                            Icon(Icons.error),
                                   ),
                                 ),
                                 ListTile(
                                   title: Text(
-                                    service['service'],
+                                    service['nom'],
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   subtitle: Text.rich(
                                     TextSpan(
-                                      text: "${service['details']}",
+                                      text: "${service['description'] ?? ''}",
                                       children: [],
                                     ),
                                   ),
@@ -271,7 +276,7 @@ class Reclamation extends GetView<ReclamationController> {
                                                           //
                                                           Get.snackbar(
                                                             "Succès",
-                                                            "Vous avez réçu ${service['points']}Pt",
+                                                            "Vous avez réçu ${service['point']}Pt",
                                                             backgroundColor:
                                                                 Colors.green,
                                                             colorText:
@@ -391,29 +396,4 @@ class Reclamation extends GetView<ReclamationController> {
   }
 
   //
-  Widget _buildDetailRow(var icon, String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 5),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.blue, size: 24),
-          SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
-              ),
-              SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }

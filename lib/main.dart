@@ -12,7 +12,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
   //
-  ReclamationController reclamationController = Get.put(ReclamationController());
+  ReclamationController reclamationController = Get.put(
+    ReclamationController(),
+  );
   //
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   //
@@ -27,6 +29,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'ProMata',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
@@ -34,4 +37,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

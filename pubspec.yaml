@@ -41,6 +41,7 @@ dependencies:
   qr_code_scanner_plus: ^2.0.10+1
   sms_autofill: ^2.4.1
   flutter_otp_text_field: ^1.5.1+1
+  cached_network_image:
 
 dev_dependencies:
   flutter_test:

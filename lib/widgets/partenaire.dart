@@ -1,7 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:promata/main.dart';
+import 'package:promata/utils/requete.dart';
 import 'package:promata/widgets/reclamation/reclamation_controller.dart';
 
 class ConversationScreen extends StatefulWidget {
@@ -12,83 +15,28 @@ class ConversationScreen extends StatefulWidget {
 }
 
 class _ConversationScreenState extends State<ConversationScreen> {
-  final List<Conversation> conversations = [
-    Conversation(
-      name: 'Vodacom',
-      lastMessage: 'Achat crédit.',
-      time: '10:30',
-      avatar: 'assets/Vodacom-1.png',
-      unread: true,
-    ),
-    Conversation(
-      name: 'Orange',
-      lastMessage: 'Activation tout réseaux.',
-      time: 'Hier',
-      avatar: 'assets/Orange-S.A.-Logo.png',
-      unread: false,
-    ),
-    Conversation(
-      name: 'Airtel',
-      lastMessage: 'Activation appel nuit',
-      time: 'Hier',
-      avatar: 'assets/Airtel_logo-02.png',
-      unread: true,
-    ),
-    Conversation(
-      name: 'Africell',
-      lastMessage: 'Activation appel nuit',
-      time: 'Hier',
-      avatar: 'assets/africell_rdc_logo.jpeg',
-      unread: true,
-    ),
-    Conversation(
-      name: 'Beltexco',
-      lastMessage: '3 bouteils une reduction.',
-      time: '20/04',
-      avatar: 'assets/beltexco.png',
-      unread: false,
-    ),
-    Conversation(
-      name: 'Prince Pharma',
-      lastMessage: 'Un packet pour 10',
-      time: '19/04',
-      avatar: 'assets/prince-pharma-logo.png',
-      unread: false,
-    ),
-    Conversation(
-      name: 'Dream Cosmetics',
-      lastMessage: 'Un packet pour 10',
-      time: '19/04',
-      avatar: 'assets/dreamcosmetics.jpeg',
-      unread: false,
-    ),
-    Conversation(
-      name: 'Pains Victoire',
-      lastMessage: 'Un packet pour 10',
-      time: '19/04',
-      avatar: 'assets/painvictoire.jpeg',
-      unread: false,
-    ),
-  ];
-
   bool isSearching = false;
   final TextEditingController _searchController = TextEditingController();
-  List<Conversation> _filteredConversations = [];
+  List _filteredConversations = [];
   //
   ReclamationController reclamationController = Get.find();
+  //
+  var box = GetStorage();
+  //
 
   @override
   void initState() {
     super.initState();
-    _filteredConversations = conversations;
+    //
+    _filteredConversations = box.read("entreprises") ?? [];
   }
 
   void _filterConversations(String query) {
     setState(() {
-      _filteredConversations =
-          conversations.where((conv) {
-            return conv.name.toLowerCase().contains(query.toLowerCase());
-          }).toList();
+      // _filteredConversations =
+      //     conversations.where((conv) {
+      //       return conv.name.toLowerCase().contains(query.toLowerCase());
+      //     }).toList();
     });
   }
 
@@ -127,7 +75,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 setState(() {
                   isSearching = false;
                   _searchController.clear();
-                  _filteredConversations = conversations;
+                  //_filteredConversations = conversations;
                 });
               },
             ),
@@ -148,66 +96,39 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 width: 50,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(25),
-                  image: DecorationImage(
-                    image: ExactAssetImage(conversation.avatar),
-                    fit: BoxFit.contain,
-                  ),
+                  // image: DecorationImage(
+                  //   image: NetworkImage(
+                  //     "${Requete.url}/api/Entreprise/logo/${conversation['id']}",
+                  //   ),
+                  //   fit: BoxFit.contain,
+                  // ),
+                ),
+                child: CachedNetworkImage(
+                  imageUrl:
+                      "${Requete.url}/api/Entreprise/logo/${conversation['id']}",
+                  placeholder: (context, url) => CircularProgressIndicator(),
+                  errorWidget: (context, url, error) => Icon(Icons.error),
                 ),
               ),
             ),
             title: Text(
-              conversation.name,
+              conversation['nom'],
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             //subtitle: Text(conversation.lastMessage),
-            /*
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  conversation.time,
-                  style: TextStyle(
-                    color: conversation.unread
-                        ? Colors.teal
-                        : Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-                if (conversation.unread)
-                  Container(
-                    margin: const EdgeInsets.only(top: 4),
-                    width: 16,
-                    height: 16,
-                    decoration: const BoxDecoration(
-                      color: Colors.teal,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Text(
-                        '1',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            */
+            //
             onTap: () {
               // Action lorsqu'on clique sur une conversation
               //
               partenaire.value = {
-                "id": 1,
-                "nom": conversation.name,
-                "logo": conversation.avatar,
+                "id": conversation['id'],
+                "nom": conversation['nom'],
+                "logo": conversation['id'],
               };
-              reclamationController.checkTicket(conversation.name);
+              reclamationController.checkTicket(conversation['nom']);
               //
               Get.back();
-              print('Conversation sélectionnée: ${conversation.name}');
+              print('Conversation sélectionnée: ${conversation['nom']}');
             },
           );
         },

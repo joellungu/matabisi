@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:promata/utils/requete.dart';
 
 import '../../main.dart';
 import '../../widgets/partenaire.dart';
@@ -76,25 +78,6 @@ class _CodeEntryPageState extends State<CodeEntryPage> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
 
-              // SizedBox(height: 20),
-              // TextFormField(
-              //   controller: _codeController,
-              //   textAlign: TextAlign.center,
-              //   style: TextStyle(
-              //     fontWeight: FontWeight.bold,
-              //   ),
-              //   decoration: InputDecoration(
-              //     labelText: 'Code reçu',
-              //     border: OutlineInputBorder(),
-              //     prefixIcon: Icon(Icons.confirmation_number),
-              //   ),
-              //   validator: (value) {
-              //     if (value == null || value.isEmpty) {
-              //       return 'Veuillez entrer un code';
-              //     }
-              //     return null;
-              //   },
-              // ),
               SizedBox(height: 15),
               Container(
                 height: 55,
@@ -112,12 +95,20 @@ class _CodeEntryPageState extends State<CodeEntryPage> {
                     leading: Container(
                       height: 50,
                       width: 50,
+
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(25),
-                        image: DecorationImage(
-                          image: ExactAssetImage(partenaire['logo'] ?? ''),
-                          fit: BoxFit.contain,
-                        ),
+                        // image: DecorationImage(
+                        //   image: ExactAssetImage(partenaire['logo'] ?? ''),
+                        //   fit: BoxFit.contain,
+                        // ),
+                      ),
+                      child: CachedNetworkImage(
+                        imageUrl:
+                            "${Requete.url}/api/Entreprise/logo/${partenaire['logo']}",
+                        placeholder:
+                            (context, url) => CircularProgressIndicator(),
+                        errorWidget: (context, url, error) => Icon(Icons.error),
                       ),
                     ),
                     title: Text(partenaire['nom'] ?? ''),

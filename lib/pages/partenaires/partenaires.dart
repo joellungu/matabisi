@@ -1,5 +1,8 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:promata/utils/requete.dart';
 
 class Partenaires extends StatefulWidget {
   const Partenaires({super.key});
@@ -9,79 +12,37 @@ class Partenaires extends StatefulWidget {
 }
 
 class _ConversationScreenState extends State<Partenaires> {
-  final List<Conversation> conversations = [
-    Conversation(
-      name: 'Vodacom',
-      lastMessage: 'Achat crédit.',
-      time: '10:30',
-      avatar: 'assets/Vodacom-1.png',
-      unread: true,
-    ),
-    Conversation(
-      name: 'Orange',
-      lastMessage: 'Activation tout réseaux.',
-      time: 'Hier',
-      avatar: 'assets/Orange-S.A.-Logo.png',
-      unread: false,
-    ),
-    Conversation(
-      name: 'Airtel',
-      lastMessage: 'Activation appel nuit',
-      time: 'Hier',
-      avatar: 'assets/Airtel_logo-02.png',
-      unread: true,
-    ),
-    Conversation(
-      name: 'Mayonnaise Mayo',
-      lastMessage: '3 bouteils une reduction.',
-      time: '20/04',
-      avatar: 'assets/EXC_0272.jpg',
-      unread: false,
-    ),
-    Conversation(
-      name: 'Guillette',
-      lastMessage: 'Un packet pour 10',
-      time: '19/04',
-      avatar: 'assets/Gillette-Logo.png',
-      unread: false,
-    ),
-  ];
-
   bool isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   List<Conversation> _filteredConversations = [];
+  //
+  Requete requete = Requete();
+  //
 
   @override
   void initState() {
     super.initState();
-    _filteredConversations = conversations;
-  }
-
-  void _filterConversations(String query) {
-    setState(() {
-      _filteredConversations = conversations.where((conv) {
-        return conv.name.toLowerCase().contains(query.toLowerCase());
-      }).toList();
-    });
+    //  _filteredConversations = conversations;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: !isSearching
-            ? const Text('Partenaires')
-            : TextField(
-          controller: _searchController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Rechercher une partenaires...',
-            border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white70),
-          ),
-          style: const TextStyle(color: Colors.black),
-          onChanged: _filterConversations,
-        ),
+        title:
+            !isSearching
+                ? const Text('Partenaires')
+                : TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Rechercher une partenaires...',
+                    border: InputBorder.none,
+                    hintStyle: TextStyle(color: Colors.white70),
+                  ),
+                  style: const TextStyle(color: Colors.black),
+                  //onChanged: _filterConversations,
+                ),
         actions: [
           if (!isSearching)
             IconButton(
@@ -99,91 +60,85 @@ class _ConversationScreenState extends State<Partenaires> {
                 setState(() {
                   isSearching = false;
                   _searchController.clear();
-                  _filteredConversations = conversations;
+                  //_filteredConversations = conversations;
                 });
               },
             ),
           const SizedBox(width: 10),
         ],
       ),
-      body: ListView.builder(
-        itemCount: _filteredConversations.length,
-        itemBuilder: (context, index) {
-          final conversation = _filteredConversations[index];
-          return ListTile(
-            leading: CircleAvatar(
-              //backgroundImage: AssetImage(conversation.avatar, ),
-              backgroundColor: Colors.white,
-              radius: 25,
-              child: Container(
-                height: 50,
-                width: 50,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(25),
-                    image: DecorationImage(image: ExactAssetImage(conversation.avatar),
-                        fit: BoxFit.contain
-                    )
-                ),
-              ),
-            ),
-            title: Text(
-              conversation.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            //subtitle: Text(conversation.lastMessage),
-            /*
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  conversation.time,
-                  style: TextStyle(
-                    color: conversation.unread
-                        ? Colors.teal
-                        : Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-                if (conversation.unread)
-                  Container(
-                    margin: const EdgeInsets.only(top: 4),
-                    width: 16,
-                    height: 16,
-                    decoration: const BoxDecoration(
-                      color: Colors.teal,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Text(
-                        '1',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                        ),
-                      ),
+      body: FutureBuilder(
+        future: getAllUtilisateurs(),
+        builder: (c, t) {
+          if (t.hasData) {
+            //
+            List listEnt = t.data as List;
+            return ListView.builder(
+              itemCount: listEnt.length,
+              itemBuilder: (context, index) {
+                Map<String, dynamic> e = listEnt[index];
+                print("Entreprise: $e");
+                return ListTile(
+                  onTap: () {
+                    //
+                  },
+                  leading: CircleAvatar(
+                    key: UniqueKey(),
+                    backgroundColor: Colors.grey.shade300,
+                    backgroundImage: NetworkImage(
+                      "${Requete.url}/api/Entreprise/logo/${e['id']}",
                     ),
                   ),
-              ],
+                  title: Text(
+                    e['nom'],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                      color: Colors.black,
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${e['secteur']} • ${e['email']}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                      color: Colors.green,
+                    ),
+                  ),
+                );
+              },
+            );
+          } else if (t.hasError) {
+            return Container();
+          }
+
+          return Center(
+            child: Container(
+              height: 30,
+              width: 30,
+              child: CircularProgressIndicator(),
             ),
-            */
-            onTap: () {
-              // Action lorsqu'on clique sur une conversation
-              print('Conversation sélectionnée: ${conversation.name}');
-            },
           );
         },
       ),
-      /*
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Action pour créer une nouvelle conversation
-        },
-        backgroundColor: Colors.teal,
-        child: const Icon(Icons.chat, color: Colors.white),
-      ),
-      */
     );
+  }
+
+  Future<List> getAllUtilisateurs() async {
+    //
+    //
+    http.Response response = await requete.getE("api/Entreprise");
+    //
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      //
+      print("SUCCES: ${response.statusCode}");
+      print("SUCCES: ${response.body}");
+      return jsonDecode(response.body);
+    } else {
+      print("ERREUR: ${response.statusCode}");
+      print("ERREUR: ${response.body}");
+      return [];
+    }
   }
 }
 

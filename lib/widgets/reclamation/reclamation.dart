@@ -2,18 +2,24 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:flutter_barcode_scanner_plus/flutter_barcode_scanner_plus.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:location/location.dart';
 import 'package:promata/pages/accueil.dart';
 import 'package:promata/utils/requete.dart';
 import 'package:promata/widgets/reclamation/reclamation_controller.dart';
 import 'package:promata/widgets/reclamation/scanner.dart';
+import 'package:http/http.dart' as http;
 
 class Reclamation extends GetView<ReclamationController> {
   //
-
+  var box = GetStorage();
   //
   bool isSearching = false;
+  //
+  Requete requete = Requete();
   //
   Reclamation() {
     //
@@ -332,11 +338,42 @@ class Reclamation extends GetView<ReclamationController> {
                                 ),
                                 const SizedBox(height: 10),
                                 ElevatedButton(
-                                  onPressed: () {
+                                  onPressed: () async {
                                     //
                                     Get.back();
                                     //
-                                    Get.to(QRScannerPage(service));
+                                    Map loc = await getLocation();
+                                    //
+                                    String barcodeScanRes =
+                                        await FlutterBarcodeScanner.scanBarcode(
+                                          "red",
+                                          "Annuler",
+                                          true,
+                                          ScanMode.QR,
+                                        );
+                                    //
+                                    if (barcodeScanRes.isNotEmpty) {
+                                      //
+                                      Map client = box.read("client") ?? {};
+
+                                      //
+                                      print("Client: $client");
+                                      //
+                                      Map e = {
+                                        "codeUnique": barcodeScanRes,
+                                        "idEntreprise":
+                                            service!['idEntreprise'],
+                                        "lon": loc['lon'] ?? 0,
+                                        "lat": loc['lat'] ?? 0,
+                                        "nomCategorie": service!['nom'],
+                                        "idClient": client['id'],
+                                      };
+                                      //
+                                      getAllEntreprise(e);
+                                      //
+                                    }
+                                    //
+                                    //Get.to(QRScannerPage(service));
                                     //
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -396,4 +433,77 @@ class Reclamation extends GetView<ReclamationController> {
   }
 
   //
+  Future<Map> getLocation() async {
+    Location location = Location();
+
+    bool serviceEnabled;
+    PermissionStatus permissionGranted;
+    LocationData locationData;
+
+    serviceEnabled = await location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await location.requestService();
+      if (!serviceEnabled) {
+        return {};
+      }
+    }
+
+    permissionGranted = await location.hasPermission();
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await location.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) {
+        return {};
+      }
+    }
+
+    locationData = await location.getLocation();
+    return {"lon": locationData.longitude, "lat": locationData.latitude};
+  }
+
+  //
+  Future<void> getAllEntreprise(Map t) async {
+    //
+    List cours = [];
+    //
+    http.Response response = await requete.postE("api/transactions", t);
+    //
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      //
+      print('Data rep succès: $t');
+      print('Data rep succès: ${response.statusCode}');
+      print('Data rep succès: ${response.body}');
+      //
+      //box.write("cours", response.body);
+      //
+      String rep = response.body;
+      //
+      Get.snackbar("Succès", rep);
+
+      Get.offAll(Accueil());
+      //
+    } else {
+      print('Data rep Erreur: $t');
+      print('Data rep Erreur: ${response.statusCode}');
+      print('Data rep Erreur: ${response.body}');
+      //
+      Get.snackbar(
+        "Erreur",
+        "Le code n'est pas valide.",
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+      );
+      //return {"status": "Err", "message": response.body};
+    }
+
+    //
+    // List cs = box.read("entreprises") ?? [];
+    // if (cours.isNotEmpty) {
+    //   cs = cours;
+    // }
+    //
+    //cs.addAll(cours);
+    //
+    // box.write('entreprises', cs);
+    // return cs;
+  }
 }

@@ -1,6 +1,12 @@
+import 'dart:convert';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:promata/utils/requete.dart';
+import 'package:http/http.dart' as http;
 
 class Historique extends StatefulWidget {
   const Historique({super.key});
@@ -10,84 +16,54 @@ class Historique extends StatefulWidget {
 }
 
 class _Historique extends State<Historique> {
-  final List<Conversation> conversations = [
-    Conversation(
-      name: 'Vodacom',
-      points: 30,
-      lastMessage: 'Achat crédit.',
-      time: '10:30',
-      avatar: 'assets/Vodacom-1.png',
-      unread: true,
-    ),
-    Conversation(
-      name: 'Orange',
-      points: 10,
-      lastMessage: 'Activation tout réseaux.',
-      time: 'Hier',
-      avatar: 'assets/Orange-S.A.-Logo.png',
-      unread: false,
-    ),
-    Conversation(
-      name: 'Airtel',
-      points: 20,
-      lastMessage: 'Activation appel nuit',
-      time: 'Hier',
-      avatar: 'assets/Airtel_logo-02.png',
-      unread: true,
-    ),
-    Conversation(
-      name: 'Mayonnaise Mayo',
-      points: 70,
-      lastMessage: '3 bouteils une reduction.',
-      time: '20/04',
-      avatar: 'assets/EXC_0272.jpg',
-      unread: false,
-    ),
-    Conversation(
-      name: 'Guillette',
-      points: 50,
-      lastMessage: 'Un packet pour 10',
-      time: '19/04',
-      avatar: 'assets/Gillette-Logo.png',
-      unread: false,
-    ),
-  ];
+  //
 
   bool isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   List<Conversation> _filteredConversations = [];
+  //
+  Requete requete = Requete();
+  //
+  var box = GetStorage();
+  //
+  Map client = {};
 
   @override
   void initState() {
+    //
+    client = box.read("client") ?? {};
+    //
     super.initState();
-    _filteredConversations = conversations;
+    //_filteredConversations = conversations;
   }
 
-  void _filterConversations(String query) {
-    setState(() {
-      _filteredConversations = conversations.where((conv) {
-        return conv.name.toLowerCase().contains(query.toLowerCase());
-      }).toList();
-    });
-  }
+  // void _filterConversations(String query) {
+  //   setState(() {
+  //     _filteredConversations =
+  //         conversations.where((conv) {
+  //           return conv.name.toLowerCase().contains(query.toLowerCase());
+  //         }).toList();
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: !isSearching
-            ? const Text('Historique des actions')
-            : TextField(
-          controller: _searchController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Rechercher une action...',
-            border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white70),
-          ),
-          style: const TextStyle(color: Colors.black),
-          onChanged: _filterConversations,
-        ),
+        title:
+            !isSearching
+                ? const Text('Historique des actions')
+                : TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Rechercher une action...',
+                    border: InputBorder.none,
+                    hintStyle: TextStyle(color: Colors.white70),
+                  ),
+                  style: const TextStyle(color: Colors.black),
+                  //onChanged: _filterConversations,
+                ),
         actions: [
           if (!isSearching)
             IconButton(
@@ -105,87 +81,97 @@ class _Historique extends State<Historique> {
                 setState(() {
                   isSearching = false;
                   _searchController.clear();
-                  _filteredConversations = conversations;
+                  //_filteredConversations = conversations;
                 });
               },
             ),
           const SizedBox(width: 10),
         ],
       ),
-      body: ListView.builder(
-        itemCount: _filteredConversations.length,
-        itemBuilder: (context, index) {
-          final conversation = _filteredConversations[index];
-          return ListTile(
-            leading: CircleAvatar(
-              //backgroundImage: AssetImage(conversation.avatar, ),
-              backgroundColor: Colors.white,
-              radius: 25,
-              child: Container(
-                height: 50,
-                width: 50,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                  image: DecorationImage(image: ExactAssetImage(conversation.avatar),
-                  fit: BoxFit.contain
-                  )
-                ),
-              ),
-            ),
-            title: Text(
-              conversation.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text.rich(TextSpan(
-              text: "${conversation.lastMessage}\n",
-              children: [
-                TextSpan(text: "01-08-2025 ",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.teal,
-                  )
-                ),
-                /*
+      body: FutureBuilder(
+        future: getAllUtilisateurs(client['telephone']),
+        builder: (c, t) {
+          if (t.hasData) {
+            //
+            List _filteredConversations = t.data as List;
+            //
+            return ListView.builder(
+              itemCount: _filteredConversations.length,
+              itemBuilder: (context, index) {
+                final conversation = _filteredConversations[index];
+                return ListTile(
+                  leading: CircleAvatar(
+                    //backgroundImage: AssetImage(conversation.avatar, ),
+                    backgroundColor: Colors.white,
+                    radius: 25,
+                    child: Container(
+                      height: 50,
+                      width: 50,
+                      child: CachedNetworkImage(
+                        imageUrl:
+                            "${Requete.url}/api/Entreprise/logo/${conversation['idEntreprise']}",
+                        placeholder:
+                            (context, url) => CircularProgressIndicator(),
+                        errorWidget: (context, url, error) => Icon(Icons.error),
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    conversation['nom'],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text.rich(
+                    TextSpan(
+                      text: "${conversation['nomCategorie']}\n",
+                      children: [
+                        TextSpan(
+                          text: "${conversation['date']} ",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.teal,
+                          ),
+                        ),
+                        /*
                 TextSpan(text: '${conversation.points}Pt',
                     style: TextStyle(
                       fontWeight: FontWeight.bold, color: Colors.blue,
                     )
                 ),
                 */
-              ]
-            )),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-
-                Text(
-                  '${conversation.points}Pt',
-                  style: TextStyle(
-                    color: conversation.unread
-                        ? Colors.teal
-                        : Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-                //if (conversation.unread)
-
-                  Container(
-                    margin: const EdgeInsets.only(top: 4),
-                    width: 16,
-                    height: 16,
-                    decoration: const BoxDecoration(
-                      //color: Colors.teal,
-                      shape: BoxShape.circle,
+                      ],
                     ),
-                    child: Center(
-                      child: SvgPicture.asset(
-                        conversation.unread ? "assets/HugeiconsArrowMoveUpLeft.svg":
-                        "assets/HugeiconsArrowMoveDownRight.svg",
-                        width: 30,
-                        height: 30,
-                        color: Colors.teal,
+                  ),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${conversation['valeur']} Pts',
+                        style: TextStyle(
+                          color: true ? Colors.teal : Colors.grey[600],
+                          fontSize: 12,
+                        ),
                       ),
-                      /*
+
+                      //if (conversation.unread)
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          //color: Colors.teal,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: SvgPicture.asset(
+                            true
+                                ? "assets/HugeiconsArrowMoveUpLeft.svg"
+                                : "assets/HugeiconsArrowMoveDownRight.svg",
+                            width: 30,
+                            height: 30,
+                            color: Colors.teal,
+                          ),
+                          /*
                         child: Text(
                         '1',
                         style: TextStyle(
@@ -194,126 +180,166 @@ class _Historique extends State<Historique> {
                         ),
                       ),
                       */
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
-              ],
+                  onTap: () {
+                    // Action lorsqu'on clique sur une conversation
+                    _showActionDetails(context, conversation);
+                  },
+                );
+              },
+            );
+          } else if (t.hasError) {
+            return Container();
+          }
+
+          return Center(
+            child: Container(
+              height: 30,
+              width: 30,
+              child: CircularProgressIndicator(),
             ),
-            onTap: () {
-              // Action lorsqu'on clique sur une conversation
-              _showActionDetails(context, conversation);
-            },
           );
         },
       ),
     );
   }
 
+  Future<List> getAllUtilisateurs(String telephone) async {
+    //
+    print("Téléphone: ${client['telephone']}");
+    //
+    http.Response response = await requete.postEs(
+      "api/transactions/client/2mois",
+      client['telephone'],
+    );
+    //
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      //
+      print("SUCCES: ${response.statusCode}");
+      print("SUCCES: ${response.body}");
+      return jsonDecode(response.body);
+    } else {
+      print("ERREUR: ${response.statusCode}");
+      print("ERREUR: ${response.body}");
+      return [];
+    }
+  }
+
   //
-  void _showActionDetails(BuildContext context, Conversation data) {
+  void _showActionDetails(BuildContext context, Map data) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.9,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                      width: 60,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(5),
-                      )),
+      builder:
+          (context) => Container(
+            height: MediaQuery.of(context).size.height * 0.9,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: Offset(0, -2),
                 ),
-                SizedBox(height: 16),
-                Row(
-                  children: [
-                    Container(
-                        height: 50,
-                        width: 50,
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(25),
-                            image: DecorationImage(image: ExactAssetImage(data.avatar),
-                                fit: BoxFit.contain
-                            )
-                        ),
-
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            data.name,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            data.lastMessage,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(),
-                  ],
-                ),
-                SizedBox(height: 24),
-                _buildDetailRow(Icons.store, 'Marque', data.name),
-                _buildDetailRow(Icons.calendar_today, 'Date et Heure',
-                    '15 Juin 2023 • 14:30'),
-                _buildDetailRow(Icons.credit_card, 'Montant', '45,00 €'),
-                _buildDetailRow(Icons.stars, 'Points gagnés', '120 pts'),
-                _buildDetailRow(Icons.location_on, 'Lieu', 'Kinshasa, RDC'),
-                _buildDetailRow(
-                    Icons.receipt, 'Référence', 'TX-7894561230'),
-                SizedBox(height: 24),
-                Divider(),
-                SizedBox(height: 16),
-                Text(
-                  'Description',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Achat d\'accessoires pour iPhone dans la boutique officielle Apple. Promotion spéciale été 2023 avec points bonus.',
-                  style: TextStyle(color: Colors.grey[700]),
-                ),
-                SizedBox(height: 24),
-
               ],
             ),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 60,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(25),
+                            // image: DecorationImage(
+                            //   image: ExactAssetImage(data.avatar),
+                            //   fit: BoxFit.contain,
+                            // ),
+                          ),
+                          //idCategorie
+                          child: CachedNetworkImage(
+                            imageUrl:
+                                "${Requete.url}/api/Entreprise/logo/${data['idEntreprise']}",
+                            placeholder:
+                                (context, url) => CircularProgressIndicator(),
+                            errorWidget:
+                                (context, url, error) => Icon(Icons.error),
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                data['nomCategorie'],
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                data['nomCategorie'],
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(),
+                      ],
+                    ),
+                    SizedBox(height: 24),
+                    _buildDetailRow(Icons.store, 'Entreprise', data['nom']),
+                    _buildDetailRow(
+                      Icons.calendar_today,
+                      'Date et Heure',
+                      data['nomCategorie'],
+                    ),
+                    //_buildDetailRow(Icons.credit_card, 'Montant', '45,00 €'),
+                    _buildDetailRow(
+                      Icons.stars,
+                      'Points gagnés',
+                      '${data['valeur']} pts',
+                    ),
+                    _buildDetailRow(Icons.location_on, 'Lieu', 'Kinshasa, RDC'),
+                    _buildDetailRow(
+                      Icons.receipt,
+                      'Référence',
+                      '${data['id']}',
+                    ),
+                    SizedBox(height: 24),
+                    Divider(),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
     );
   }
 
@@ -330,18 +356,12 @@ class _Historique extends State<Historique> {
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
               ),
               SizedBox(height: 4),
               Text(
                 value,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),
@@ -349,7 +369,6 @@ class _Historique extends State<Historique> {
       ),
     );
   }
-
 }
 
 class Conversation {

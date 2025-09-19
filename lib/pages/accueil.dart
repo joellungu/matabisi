@@ -29,6 +29,8 @@ class _Accueil extends State<Accueil> {
   //
   var box = GetStorage();
   //
+  Map client = {};
+  //
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _openDrawer() {
@@ -57,6 +59,14 @@ class _Accueil extends State<Accueil> {
   ];
 
   @override
+  void initState() {
+    //
+    client = box.read("client") ?? {};
+    //
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     //
     Map client = box.read('client') ?? {};
@@ -74,17 +84,17 @@ class _Accueil extends State<Accueil> {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage: AssetImage(
-                      'assets/avatar.png',
-                    ), // Ton avatar ou logo
+                    // backgroundImage: AssetImage(
+                    //   'assets/avatar.png',
+                    // ), // Ton avatar ou logo
                   ),
                   SizedBox(height: 10),
                   Text(
-                    'Mokpongbo Lungu',
+                    '${client['nom']}',
                     style: TextStyle(color: Colors.black, fontSize: 20),
                   ),
                   Text(
-                    '+243815381693',
+                    '${client['telephone']}',
                     style: TextStyle(
                       color: Colors.teal,
                       fontWeight: FontWeight.bold,

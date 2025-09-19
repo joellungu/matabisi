@@ -38,10 +38,12 @@ dependencies:
   get_storage:
   flutter_svg: ^2.2.0
   intl: ^0.20.2
-  qr_code_scanner_plus: ^2.0.10+1
   sms_autofill: ^2.4.1
   flutter_otp_text_field: ^1.5.1+1
   cached_network_image:
+  location: ^5.0.0
+  permission_handler: ^12.0.1
+  flutter_barcode_scanner_plus: ^3.0.8
 
 dev_dependencies:
   flutter_test:

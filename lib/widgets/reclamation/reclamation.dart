@@ -58,11 +58,12 @@ class Reclamation extends GetView<ReclamationController> {
                         ),
                         child: CachedNetworkImage(
                           imageUrl:
-                              "${Requete.url}/produit-categories/logo/${service['id']}",
+                              "${Requete.url}/produit-categories/logo/${service['id']}?v=${DateTime.now().millisecondsSinceEpoch}",
                           placeholder:
                               (context, url) => CircularProgressIndicator(),
                           errorWidget:
                               (context, url, error) => Icon(Icons.error),
+                          //cacheManager: BaseCacheManager(),
                         ),
                       ),
                     ),
@@ -122,6 +123,7 @@ class Reclamation extends GetView<ReclamationController> {
                     ),
                     onTap: () {
                       // Action lorsqu'on clique sur une conversation
+                      print("barcodeScanRes: 1 == $service");
                       //_showActionDetails(context, conversation);
                       showModalBottomSheet(
                         context: context,
@@ -155,7 +157,7 @@ class Reclamation extends GetView<ReclamationController> {
                                   ),
                                   child: CachedNetworkImage(
                                     imageUrl:
-                                        "${Requete.url}/produit-categories/logo/${service['id']}",
+                                        "${Requete.url}/produit-categories/logo/${service['id']}?v=${DateTime.now().millisecondsSinceEpoch}",
                                     placeholder:
                                         (context, url) =>
                                             CircularProgressIndicator(),
@@ -352,6 +354,10 @@ class Reclamation extends GetView<ReclamationController> {
                                           ScanMode.QR,
                                         );
                                     //
+                                    print(
+                                      "barcodeScanRes: $barcodeScanRes \n $service",
+                                    );
+                                    //
                                     if (barcodeScanRes.isNotEmpty) {
                                       //
                                       Map client = box.read("client") ?? {};
@@ -367,6 +373,7 @@ class Reclamation extends GetView<ReclamationController> {
                                         "lat": loc['lat'] ?? 0,
                                         "nomCategorie": service!['nom'],
                                         "idClient": client['id'],
+                                        "telephone": client['telephone'],
                                       };
                                       //
                                       getAllEntreprise(e);

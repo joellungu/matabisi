@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -5,7 +7,9 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:promata/main.dart';
 import 'package:promata/utils/requete.dart';
+import 'package:promata/utils/service_requete.dart';
 import 'package:promata/widgets/reclamation/reclamation_controller.dart';
+import 'package:http/http.dart' as http;
 
 class ConversationScreen extends StatefulWidget {
   const ConversationScreen({super.key});
@@ -23,12 +27,20 @@ class _ConversationScreenState extends State<ConversationScreen> {
   //
   var box = GetStorage();
   //
+  Requete requete = Requete();
+  //
 
   @override
   void initState() {
     super.initState();
     //
-    _filteredConversations = box.read("entreprises") ?? [];
+    //_filteredConversations = box.read("entreprises") ?? [];
+    getAll();
+  }
+
+  getAll() async {
+    _filteredConversations = await ServiceRequete.getAllEntreprise();
+    setState(() {});
   }
 
   void _filterConversations(String query) {
@@ -105,7 +117,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 ),
                 child: CachedNetworkImage(
                   imageUrl:
-                      "${Requete.url}/api/Entreprise/logo/${conversation['id']}",
+                      "${Requete.url}/api/Entreprise/logo/${conversation['id']}?v=${DateTime.now().millisecondsSinceEpoch}",
                   placeholder: (context, url) => CircularProgressIndicator(),
                   errorWidget: (context, url, error) => Icon(Icons.error),
                 ),
@@ -144,6 +156,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
       */
     );
   }
+
+  //
 }
 
 class Conversation {

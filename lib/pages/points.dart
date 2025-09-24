@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -18,21 +19,21 @@ class Points extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     //
-    Map compte = box.read("compte") ?? {};
+    //int compte = box.read("compte") ?? 0;
     //
     return FutureBuilder(
       future: getAllCours(telephone),
       builder: (c, t) {
         if (t.hasData) {
           //
-          Map cours = t.data as Map;
-          int userPoints = cours['soldePoints'];
+          int userPoints = t.data as int;
+          //int userPoints = cours['soldePoints'] ?? 0;
           //
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Vos points',
+                'Vos points cumullés',
                 style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
               const SizedBox(height: 5),
@@ -63,9 +64,9 @@ class Points extends StatelessWidget {
   }
 
   //
-  Future<Map> getAllCours(String telephone) async {
+  Future<int> getAllCours(String telephone) async {
     //
-    Map cours = {};
+    int points = 0;
     //
     http.Response response = await requete.getE("api/Compte/client/$telephone");
     //
@@ -76,16 +77,16 @@ class Points extends StatelessWidget {
       //
       //box.write("cours", response.body);
       //
-      cours = jsonDecode(response.body);
+      points = jsonDecode(response.body);
     } else {
       print('Erreur: ${response.statusCode}');
       print('Erreur: ${response.body}');
     }
 
     //
-    Map cs = box.read("compte") ?? {};
-    if (cours.isNotEmpty) {
-      cs = cours;
+    int cs = box.read("compte") ?? 0;
+    if (points != null) {
+      cs = points;
     }
     //
     //cs.addAll(cours);

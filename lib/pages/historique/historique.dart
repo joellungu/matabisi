@@ -109,7 +109,7 @@ class _Historique extends State<Historique> {
                       width: 50,
                       child: CachedNetworkImage(
                         imageUrl:
-                            "${Requete.url}/api/Entreprise/logo/${conversation['idEntreprise']}",
+                            "${Requete.url}/api/Entreprise/logo/${conversation['idEntreprise']}?v=${DateTime.now().millisecondsSinceEpoch}",
                         placeholder:
                             (context, url) => CircularProgressIndicator(),
                         errorWidget: (context, url, error) => Icon(Icons.error),
@@ -281,7 +281,7 @@ class _Historique extends State<Historique> {
                           //idCategorie
                           child: CachedNetworkImage(
                             imageUrl:
-                                "${Requete.url}/api/Entreprise/logo/${data['idEntreprise']}",
+                                "${Requete.url}/api/Entreprise/logo/${data['idEntreprise']}?v=${DateTime.now().millisecondsSinceEpoch}",
                             placeholder:
                                 (context, url) => CircularProgressIndicator(),
                             errorWidget:

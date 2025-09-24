@@ -1,10 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:promata/pages/conversion_et_transfere.dart';
 import 'package:promata/pages/partenaires/partenaires.dart';
 import 'package:promata/pages/points.dart';
 import 'package:promata/pages/profile/profile.dart';
+import 'package:promata/utils/requete.dart';
+import 'package:promata/utils/service_requete.dart';
 import 'package:promata/widgets/depenses/depenses.dart';
 import 'Compte/Compte.dart';
 import 'faq/faqs.dart';
@@ -310,6 +314,43 @@ class _Accueil extends State<Accueil> {
                       height: 50,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueGrey,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          // Action pour réclamer des points
+                          //Get.to(CodeEntryPage());
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'INSERER CODE PRODUIT',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            SvgPicture.asset(
+                              "assets/HugeiconsArrowMoveUpLeft.svg",
+                              width: 30,
+                              height: 30,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -326,7 +367,95 @@ class _Accueil extends State<Accueil> {
                               return Container(
                                 padding: EdgeInsets.all(20),
                                 height: Get.height / 1.1,
-                                child: SpendPointsPage(),
+                                child: Scaffold(
+                                  appBar: AppBar(
+                                    backgroundColor: Colors.transparent,
+                                    title: const Text(
+                                      '💰 Convertir mes points',
+                                    ),
+                                  ),
+                                  backgroundColor: Colors.transparent,
+                                  body: FutureBuilder(
+                                    future: ServiceRequete.getAllEntreprise(),
+                                    builder: (c, t) {
+                                      if (t.hasData) {
+                                        //
+                                        List _filteredConversations =
+                                            t.data as List;
+                                        //
+                                        return ListView.builder(
+                                          itemCount:
+                                              _filteredConversations.length,
+                                          itemBuilder: (context, index) {
+                                            final conversation =
+                                                _filteredConversations[index];
+                                            return ListTile(
+                                              leading: CircleAvatar(
+                                                //backgroundImage: AssetImage(conversation.avatar, ),
+                                                backgroundColor: Colors.white,
+                                                radius: 25,
+                                                child: Container(
+                                                  height: 50,
+                                                  width: 50,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          25,
+                                                        ),
+                                                    // image: DecorationImage(
+                                                    //   image: NetworkImage(
+                                                    //     "${Requete.url}/api/Entreprise/logo/${conversation['id']}",
+                                                    //   ),
+                                                    //   fit: BoxFit.contain,
+                                                    // ),
+                                                  ),
+                                                  child: CachedNetworkImage(
+                                                    imageUrl:
+                                                        "${Requete.url}/api/Entreprise/logo/${conversation['id']}?v=${DateTime.now().millisecondsSinceEpoch}",
+                                                    placeholder:
+                                                        (context, url) =>
+                                                            CircularProgressIndicator(),
+                                                    errorWidget:
+                                                        (context, url, error) =>
+                                                            Icon(Icons.error),
+                                                  ),
+                                                ),
+                                              ),
+                                              title: Text(
+                                                conversation['nom'],
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              //
+                                              onTap: () {
+                                                // Action lorsqu'on clique sur une conversation
+                                                Get.to(
+                                                  PointsToMoneyPage(
+                                                    entreprise: conversation,
+                                                  ),
+                                                );
+                                                //
+                                              },
+                                            );
+                                          },
+                                        );
+                                      } else if (t.hasError) {
+                                        //
+                                        return Container();
+                                      }
+
+                                      return Center(
+                                        child: SizedBox(
+                                          height: 30,
+                                          width: 30,
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  //child: SpendPointsPage(),
+                                ),
                               );
                             },
                           );

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -12,6 +14,7 @@ import 'package:promata/utils/service_requete.dart';
 import 'package:promata/widgets/depenses/depenses.dart';
 import 'Compte/Compte.dart';
 import 'faq/faqs.dart';
+import 'package:http/http.dart' as http;
 import 'formulaire/formulaire.dart';
 import 'historique/historique.dart';
 import 'notifications/notification.dart';
@@ -230,39 +233,62 @@ class _Accueil extends State<Accueil> {
               ),
             ),
             // Slider des promotions
-            SizedBox(
-              height: 270,
-              child: PageView.builder(
-                controller: _promoController,
-                itemCount: promotions.length,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPromoIndex = index;
-                  });
-                },
-                itemBuilder: (context, index) {
-                  return _buildPromoCard(promotions[index]);
-                },
-              ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                promotions.length,
-                (index) => Container(
-                  width: 8,
-                  height: 8,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color:
-                        _currentPromoIndex == index
-                            ? Colors.blue
-                            : Colors.grey[300],
+            FutureBuilder(
+              future: getAllPubs(),
+              builder: (c, t) {
+                if (t.hasData) {
+                  List publicites = t.data as List;
+                  //
+                  return Column(
+                    children: [
+                      SizedBox(
+                        height: 270,
+                        child: PageView.builder(
+                          controller: _promoController,
+                          itemCount: publicites.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentPromoIndex = index;
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            return _buildPromoCard(publicites[index]);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          publicites.length,
+                          (index) => Container(
+                            width: 8,
+                            height: 8,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color:
+                                  _currentPromoIndex == index
+                                      ? Colors.blue
+                                      : Colors.grey[300],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                } else if (t.hasError) {
+                  return Container();
+                }
+                return Center(
+                  child: Container(
+                    height: 30,
+                    width: 30,
+                    child: CircularProgressIndicator(),
                   ),
-                ),
-              ),
+                );
+              },
             ),
 
             // Boutons principaux
@@ -492,7 +518,20 @@ class _Accueil extends State<Accueil> {
     );
   }
 
-  Widget _buildPromoCard(Promotion promo) {
+  Future<List> getAllPubs() async {
+    //
+    List publicites = [];
+    //
+    final res = await http.get(Uri.parse("${Requete.url}/publicites"));
+    if (res.statusCode == 200) {
+      //setState(() {
+      publicites = jsonDecode(res.body);
+      //});
+    }
+    return publicites;
+  }
+
+  Widget _buildPromoCard(Map promo) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
       child: Container(
@@ -510,15 +549,17 @@ class _Accueil extends State<Accueil> {
         ),
         child: Column(
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              child: Image.asset(
-                promo.imagePath,
-                height: 100,
-                width: double.infinity,
-                fit: BoxFit.cover,
+            Container(
+              height: 100,
+              width: double.maxFinite,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(
+                    "${Requete.url}/publicites/${promo["id"]}/image",
+                  ),
+                  fit: BoxFit.cover,
+                ),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
             Padding(
@@ -527,7 +568,7 @@ class _Accueil extends State<Accueil> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    promo.title,
+                    promo["titre"],
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -535,28 +576,30 @@ class _Accueil extends State<Accueil> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    promo.description,
+                    promo["description"],
+                    maxLines: 2,
+                    overflow: TextOverflow.clip,
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.credit_score,
-                        color: Colors.amber[700],
-                        size: 20,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        "${promo.pointsCost} points",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.amber[700],
-                        ),
-                      ),
-                    ],
-                  ),
+                  // Row(
+                  //   children: [
+                  //     Icon(
+                  //       Icons.credit_score,
+                  //       color: Colors.amber[700],
+                  //       size: 20,
+                  //     ),
+                  //     const SizedBox(width: 5),
+                  //     Text(
+                  //       "${promo.pointsCost} points",
+                  //       style: TextStyle(
+                  //         fontSize: 16,
+                  //         fontWeight: FontWeight.bold,
+                  //         color: Colors.amber[700],
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                 ],
               ),
             ),

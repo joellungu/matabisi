@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:promata/utils/requete.dart';
+import 'package:http/http.dart' as http;
 
 class PointsToMoneyPage extends StatefulWidget {
   Map entreprise;
@@ -19,6 +23,8 @@ class _PointsToMoneyPageState extends State<PointsToMoneyPage> {
   double usdRate = 0.01; // 10 points = 0.1 USD → 1 point = 0.01 USD
 
   String? errorMessage;
+  //
+  var box = GetStorage();
 
   double calculateUSD(int points) {
     return points * usdRate;
@@ -65,6 +71,9 @@ class _PointsToMoneyPageState extends State<PointsToMoneyPage> {
 
   @override
   Widget build(BuildContext context) {
+    //
+    Map user = box.read('client') ?? {};
+    //
     return Scaffold(
       backgroundColor: const Color(0xFFF2F5FA),
       appBar: AppBar(
@@ -105,48 +114,8 @@ class _PointsToMoneyPageState extends State<PointsToMoneyPage> {
         child: Column(
           children: [
             // Carte du solde
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              elevation: 8,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blueAccent, Colors.lightBlue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
-                ),
-                child: Column(
-                  children: [
-                    const Text(
-                      "Votre solde actuel",
-                      style: TextStyle(color: Colors.white70, fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "$userPoints points",
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Équivalent : ${calculateUSD(userPoints).toStringAsFixed(2)} USD",
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            CreditCardWidget(
+              cle: '${user['telephone']}${widget.entreprise['id']}',
             ),
             const SizedBox(height: 24),
 
@@ -205,6 +174,134 @@ class _PointsToMoneyPageState extends State<PointsToMoneyPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class CreditCardWidget extends StatelessWidget {
+  final String cle;
+
+  const CreditCardWidget({super.key, required this.cle});
+
+  Future<Map<String, dynamic>> fetchCredit(String cle) async {
+    final response = await http.get(
+      Uri.parse("${Requete.url}/api/Compte/points/$cle"),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Erreur lors du chargement du crédit");
+    }
+  }
+
+  Widget _buildPointItem(String title, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(color: Colors.white70, fontSize: 14),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: fetchCredit(cle),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              "Erreur: ${snapshot.error}",
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        } else if (!snapshot.hasData) {
+          return const Center(child: Text("Aucune donnée"));
+        }
+
+        final data = snapshot.data!;
+        final int points = data["points"] ?? 0.0;
+        final double solde =
+            (points * 0.01).toDouble(); // Exemple: 1$ = 100 pts
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(5),
+          // decoration: BoxDecoration(
+          //   gradient: LinearGradient(
+          //     begin: Alignment.topLeft,
+          //     end: Alignment.bottomRight,
+          //     colors: [
+          //       Theme.of(context).colorScheme.primary,
+          //       Colors.blue.shade700,
+          //     ],
+          //   ),
+          //   borderRadius: BorderRadius.circular(20),
+          //   boxShadow: [
+          //     BoxShadow(
+          //       color: Colors.blue.shade200,
+          //       blurRadius: 20,
+          //       offset: const Offset(0, 10),
+          //     ),
+          //   ],
+          // ),
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            elevation: 8,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blueAccent, Colors.lightBlue],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.all(Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    "Votre solde actuel",
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "$points points",
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Équivalent : $solde USD",
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
